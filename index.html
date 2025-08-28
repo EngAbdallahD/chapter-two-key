@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Electrical Concepts Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F4;
+            color: #1a202c;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            position: relative;
+            padding-bottom: 4px;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #3B82F6;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after, .nav-link.active::after {
+            width: 100%;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 40vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Chosen Palette: Calm Neutrals & Tech Blue -->
+    <!-- Application Structure Plan: A thematic, single-page interactive learning module. The structure is designed for non-linear exploration, starting with practical calculators (Ohm's Law, Power) to engage the user, followed by conceptual explanations (Kirchhoff's Laws), visual comparisons (AC vs. DC), and culminating in an interactive explorer for the most complex topic (AC Power Triangle). A sticky navigation bar facilitates jumping between these thematic sections. This prioritizes user engagement and intuitive discovery over the linear structure of the source report, making complex topics more accessible. -->
+    <!-- Visualization & Content Choices: 
+        1. Ohm's Law/Power: Report Info -> Formulas for V,I,R,P. Goal -> Inform/Engage. Viz -> Interactive Calculators. Interaction -> User inputs values, JS calculates and displays results instantly. Justification -> Turns passive formulas into active learning tools. Library -> Vanilla JS.
+        2. Kirchhoff's Laws: Report Info -> KCL & KVL definitions. Goal -> Organize/Inform. Viz -> Simple diagrams using HTML/CSS. Interaction -> Static visual aid. Justification -> Provides clear, lightweight visual context for abstract laws without complex libraries. Library -> Tailwind CSS.
+        3. AC vs DC: Report Info -> Waveform characteristics. Goal -> Compare. Viz -> Line Chart. Interaction -> Toggling datasets on/off. Justification -> Visually contrasts the core difference between AC and DC. Library -> Chart.js.
+        4. AC Power: Report Info -> Power Triangle (P,Q,S) and Power Factor. Goal -> Relationships/Explore. Viz -> Dynamic Bar Chart simulating the triangle. Interaction -> User moves a slider to change Power Factor, JS updates chart data (P,Q,S) in real-time. Justification -> Makes the abstract vector relationship tangible and demonstrates the impact of power factor intuitively. Library -> Chart.js & Vanilla JS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-gray-800">Electrical Principles</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#calculators" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Calculators</a>
+                        <a href="#kirchhoff" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Kirchhoff's Laws</a>
+                        <a href="#acdc" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">AC vs DC</a>
+                        <a href="#power" class="nav-link text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">AC Power</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <section id="calculators" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800">Fundamental Laws & Calculators</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-10">This section provides interactive tools to explore the foundational relationships in electrical circuits. Ohm's Law and the Power Law are the building blocks of circuit analysis. Use these calculators to develop an intuitive understanding of how voltage, current, resistance, and power are interconnected.</p>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Ohm's Law Calculator</h3>
+                    <p class="text-gray-600 mb-6">Ohm's Law ($V = I \times R$) describes the relationship between voltage (V), current (I), and resistance (R). Enter any two values to calculate the third.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="ohm-voltage" class="block text-sm font-medium text-gray-700">Voltage (V)</label>
+                            <input type="number" id="ohm-voltage" placeholder="e.g., 12" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="ohm-current" class="block text-sm font-medium text-gray-700">Current (A)</label>
+                            <input type="number" id="ohm-current" placeholder="e.g., 0.5" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="ohm-resistance" class="block text-sm font-medium text-gray-700">Resistance (Ω)</label>
+                            <input type="number" id="ohm-resistance" placeholder="e.g., 24" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="mt-6 flex space-x-4">
+                        <button id="ohm-calculate" class="btn w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Calculate</button>
+                        <button id="ohm-reset" class="btn w-full bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">Reset</button>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">DC Power Calculator</h3>
+                    <p class="text-gray-600 mb-6">In DC circuits, power ($P = V \times I$) is the rate at which energy is consumed. Use this to calculate power, voltage, or current.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="power-power" class="block text-sm font-medium text-gray-700">Power (W)</label>
+                            <input type="number" id="power-power" placeholder="e.g., 60" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="power-voltage" class="block text-sm font-medium text-gray-700">Voltage (V)</label>
+                            <input type="number" id="power-voltage" placeholder="e.g., 120" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="power-current" class="block text-sm font-medium text-gray-700">Current (A)</label>
+                            <input type="number" id="power-current" placeholder="e.g., 0.5" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="mt-6 flex space-x-4">
+                        <button id="power-calculate" class="btn w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Calculate</button>
+                        <button id="power-reset" class="btn w-full bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="kirchhoff" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800">Kirchhoff's Circuit Laws</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-10">For more complex circuits, we need Kirchhoff's Laws. Based on the fundamental principles of conservation of charge and energy, these two laws provide a systematic way to analyze any electrical network, regardless of its complexity.</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Current Law (KCL)</h3>
+                    <p class="text-gray-600 mb-4">"The sum of currents entering a node must equal the sum of currents leaving it." This is a statement of the **conservation of charge**.</p>
+                    <div class="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-48">
+                        <div class="relative w-48 h-24">
+                            <div class="absolute top-1/2 left-0 w-1/2 h-0.5 bg-gray-500 transform -translate-y-1/2"></div>
+                            <div class="absolute top-1/2 left-1/2 w-1/2 h-0.5 bg-gray-500 transform -translate-y-1/2 rotate-45 origin-left"></div>
+                            <div class="absolute top-1/2 left-1/2 w-1/2 h-0.5 bg-gray-500 transform -translate-y-1/2 -rotate-45 origin-left"></div>
+                            <div class="absolute top-1/2 left-1/2 w-8 h-0.5 bg-gray-500 transform -translate-y-1/2 -rotate-135 origin-left"></div>
+                            <div class="absolute top-1/2 left-1/2 w-8 h-0.5 bg-gray-500 transform -translate-y-1/2 rotate-135 origin-left"></div>
+                            
+                            <div class="absolute top-1/2 left-1/2 w-4 h-4 bg-blue-600 rounded-full transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center text-white font-bold text-xs">N</div>
+                            
+                            <span class="absolute top-1/2 left-4 transform -translate-y-8 text-red-600 font-mono">I₁ →</span>
+                            <span class="absolute top-2 left-20 transform -translate-y-4 text-red-600 font-mono">I₂ →</span>
+                            <span class="absolute bottom-2 left-20 transform translate-y-4 text-red-600 font-mono">I₃ →</span>
+                        </div>
+                    </div>
+                     <p class="text-center mt-4 font-mono bg-gray-50 p-2 rounded">I₁ = I₂ + I₃</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-2xl font-semibold mb-4 text-blue-600">Voltage Law (KVL)</h3>
+                    <p class="text-gray-600 mb-4">"The sum of all voltages around any closed loop in a circuit must equal zero." This is a statement of the **conservation of energy**.</p>
+                    <div class="bg-gray-100 rounded-lg p-4 flex items-center justify-center h-48">
+                        <div class="w-48 h-32 border-2 border-gray-500 rounded-lg flex items-center justify-around relative">
+                            <div class="text-center">
+                                <span class="text-2xl font-bold text-green-600">+</span>
+                                <div class="w-4 h-8 border-l-2 border-r-2 border-gray-500 flex flex-col justify-around"><div class="h-0.5 bg-gray-500"></div></div>
+                                <span class="text-2xl font-bold text-red-600">-</span>
+                                <p class="text-sm font-mono">Vₛ</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-10 h-6 border border-gray-500 flex items-center justify-center text-sm font-mono">R₁</div>
+                                <p class="text-sm font-mono">V₁</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-10 h-6 border border-gray-500 flex items-center justify-center text-sm font-mono">R₂</div>
+                                <p class="text-sm font-mono">V₂</p>
+                            </div>
+                            <span class="absolute bottom-2 right-2 text-blue-600 text-2xl">↻</span>
+                        </div>
+                    </div>
+                    <p class="text-center mt-4 font-mono bg-gray-50 p-2 rounded">Vₛ - V₁ - V₂ = 0</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="acdc" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800">Alternating vs. Direct Current</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-10">Electrical energy comes in two forms: Direct Current (DC), which flows in one direction, and Alternating Current (AC), which periodically reverses direction. The visualization below shows the key difference in their voltage over time. This distinction was central to the "War of the Currents" and shaped our global power grid.</p>
+            <div class="card p-6">
+                <div class="chart-container">
+                    <canvas id="acdcChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="power" class="mb-16">
+            <h2 class="text-3xl font-bold text-center mb-2 text-gray-800">AC Power Explorer</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-10">While DC power is a simple calculation, AC power is more complex due to the phase shift between voltage and current. The Power Triangle is a model used to understand this relationship. Interact with the slider below to see how changing the Power Factor affects the Real, Reactive, and Apparent Power in a circuit.</p>
+            <div class="card p-6">
+                <div class="grid md:grid-cols-3 gap-8 items-center">
+                    <div class="md:col-span-1 space-y-6">
+                        <div>
+                            <label for="powerFactorSlider" class="block font-medium text-gray-700">Power Factor (cos φ): <span id="pfValue" class="font-bold text-blue-600">0.85</span></label>
+                            <input id="powerFactorSlider" type="range" min="0" max="1" step="0.01" value="0.85" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg space-y-2">
+                            <p class="flex justify-between"><span>Apparent Power (S):</span> <span class="font-mono font-semibold">1000 VA</span></p>
+                            <p class="flex justify-between"><span>Real Power (P):</span> <span id="realPowerValue" class="font-mono font-semibold text-green-600">850 W</span></p>
+                            <p class="flex justify-between"><span>Reactive Power (Q):</span> <span id="reactivePowerValue" class="font-mono font-semibold text-orange-500">527 VAR</span></p>
+                        </div>
+                        <p class="text-sm text-gray-500">A Power Factor of 1.0 is ideal, meaning all supplied power does useful work. A lower Power Factor means more "reactive" power is needed to sustain fields in motors, increasing load on the grid.</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <div class="chart-container" style="height: 400px; max-height: 50vh;">
+                             <canvas id="powerTriangleChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t">
+        <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-gray-500">
+            <p>An Interactive Exploration of Basic Electrical Concepts.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            const ohmVoltage = document.getElementById('ohm-voltage');
+            const ohmCurrent = document.getElementById('ohm-current');
+            const ohmResistance = document.getElementById('ohm-resistance');
+            const ohmCalculateBtn = document.getElementById('ohm-calculate');
+            const ohmResetBtn = document.getElementById('ohm-reset');
+
+            ohmCalculateBtn.addEventListener('click', () => {
+                const V = parseFloat(ohmVoltage.value);
+                const I = parseFloat(ohmCurrent.value);
+                const R = parseFloat(ohmResistance.value);
+
+                if (!isNaN(V) && !isNaN(I) && isNaN(R)) {
+                    ohmResistance.value = (V / I).toFixed(2);
+                } else if (!isNaN(V) && isNaN(I) && !isNaN(R)) {
+                    ohmCurrent.value = (V / R).toFixed(2);
+                } else if (isNaN(V) && !isNaN(I) && !isNaN(R)) {
+                    ohmVoltage.value = (I * R).toFixed(2);
+                }
+            });
+            
+            ohmResetBtn.addEventListener('click', () => {
+                ohmVoltage.value = '';
+                ohmCurrent.value = '';
+                ohmResistance.value = '';
+            });
+
+            const powerPower = document.getElementById('power-power');
+            const powerVoltage = document.getElementById('power-voltage');
+            const powerCurrent = document.getElementById('power-current');
+            const powerCalculateBtn = document.getElementById('power-calculate');
+            const powerResetBtn = document.getElementById('power-reset');
+
+            powerCalculateBtn.addEventListener('click', () => {
+                const P = parseFloat(powerPower.value);
+                const V = parseFloat(powerVoltage.value);
+                const I = parseFloat(powerCurrent.value);
+
+                if (!isNaN(P) && !isNaN(V) && isNaN(I)) {
+                    powerCurrent.value = (P / V).toFixed(2);
+                } else if (!isNaN(P) && isNaN(V) && !isNaN(I)) {
+                    powerVoltage.value = (P / I).toFixed(2);
+                } else if (isNaN(P) && !isNaN(V) && !isNaN(I)) {
+                    powerPower.value = (V * I).toFixed(2);
+                }
+            });
+
+            powerResetBtn.addEventListener('click', () => {
+                powerPower.value = '';
+                powerVoltage.value = '';
+                powerCurrent.value = '';
+            });
+
+            const acdcCtx = document.getElementById('acdcChart').getContext('2d');
+            const acData = [];
+            const dcData = [];
+            const labels = [];
+            for (let i = 0; i <= 360; i += 10) {
+                labels.push(i + '°');
+                acData.push(120 * Math.sin(i * Math.PI / 180));
+                dcData.push(120);
+            }
+            new Chart(acdcCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'AC Voltage',
+                        data: acData,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        tension: 0.1
+                    }, {
+                        label: 'DC Voltage',
+                        data: dcData,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        fill: false,
+                        borderDash: [5, 5]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Voltage Waveforms: AC vs. DC'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Voltage (V)'
+                            }
+                        },
+                        x: {
+                             title: {
+                                display: true,
+                                text: 'Time / Angle'
+                            }
+                        }
+                    }
+                }
+            });
+
+            const powerTriangleCtx = document.getElementById('powerTriangleChart').getContext('2d');
+            const pfSlider = document.getElementById('powerFactorSlider');
+            const pfValue = document.getElementById('pfValue');
+            const realPowerValue = document.getElementById('realPowerValue');
+            const reactivePowerValue = document.getElementById('reactivePowerValue');
+            
+            const S_apparent = 1000;
+            let powerTriangleChart;
+
+            function updatePowerTriangle() {
+                const pf = parseFloat(pfSlider.value);
+                const P_real = S_apparent * pf;
+                const Q_reactive = Math.sqrt(S_apparent**2 - P_real**2);
+
+                pfValue.textContent = pf.toFixed(2);
+                realPowerValue.textContent = `${P_real.toFixed(0)} W`;
+                reactivePowerValue.textContent = `${Q_reactive.toFixed(0)} VAR`;
+
+                if (powerTriangleChart) {
+                    powerTriangleChart.data.datasets[0].data = [P_real];
+                    powerTriangleChart.data.datasets[1].data = [Q_reactive];
+                    powerTriangleChart.options.plugins.title.text = `Power Triangle (Apparent Power S = ${S_apparent} VA)`;
+                    powerTriangleChart.update();
+                }
+            }
+
+            powerTriangleChart = new Chart(powerTriangleCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Power Components'],
+                    datasets: [
+                        {
+                            label: 'Real Power (P)',
+                            data: [0],
+                            backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Reactive Power (Q)',
+                            data: [0],
+                            backgroundColor: 'rgba(249, 115, 22, 0.7)',
+                            borderColor: 'rgba(249, 115, 22, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            max: S_apparent,
+                            title: {
+                                display: true,
+                                text: 'Power (VA)'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            display: false
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: ''
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        const unit = label.includes('Real') ? 'W' : 'VAR';
+                                        label += `${context.parsed.x.toFixed(0)} ${unit}`;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            pfSlider.addEventListener('input', updatePowerTriangle);
+            updatePowerTriangle();
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+            
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 80) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
